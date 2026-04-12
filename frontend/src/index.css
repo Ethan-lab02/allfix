@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: hsl(222, 47%, 11%);
+  --bg-secondary: hsl(223, 47%, 15%);
+  --accent-primary: hsl(199, 89%, 48%);
+  --accent-secondary: hsl(162, 84%, 39%);
+  --text-primary: hsl(210, 40%, 98%);
+  --text-secondary: hsl(215, 20%, 65%);
+  --glass-bg: hsla(223, 47%, 20%, 0.6);
+  --glass-border: hsla(210, 40%, 98%, 0.1);
+  --shadow-premium: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --font-main: 'Outfit', sans-serif;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(199, 89%, 48%, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(162, 84%, 39%, 0.1) 0px, transparent 50%);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-premium);
+  transition: var(--transition-smooth);
+}
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  border-color: hsla(199, 89%, 48%, 0.3);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-family: var(--font-main);
+  font-weight: 600;
+  transition: var(--transition-smooth);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 20px hsla(199, 89%, 48%, 0.4);
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: hsla(210, 40%, 98%, 0.05);
+  color: white;
+  font-family: var(--font-main);
+  transition: var(--transition-smooth);
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: hsla(210, 40%, 98%, 0.1);
+}
+
+.title-gradient {
+  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
