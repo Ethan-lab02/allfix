@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, Users, ClipboardCheck, Clock } from 'lucide-react';
+import { TrendingUp, Users, ClipboardCheck, Clock, Calendar } from 'lucide-react';
 
 import { api } from '../services/api';
 
@@ -9,8 +9,14 @@ const DashboardView = ({ token }) => {
     totalCustomers: 0,
     completionRate: 0,
     totalRevenue: 0,
-    recentOrders: []
+    recentOrders: [],
+    upcomingOrdersCount: 0,
+    upcomingOrdersList: [],
+    todayOrdersList: [],
+    completedOrdersList: []
   });
+  const [modalType, setModalType] = React.useState(null); // 'today', 'upcoming', 'completed', 'revenue'
+  const [showModal, setShowModal] = React.useState(false);
 
   React.useEffect(() => {
     const fetchStats = async () => {
@@ -27,11 +33,89 @@ const DashboardView = ({ token }) => {
   }, [token]);
 
   const stats = [
-    { label: 'Órdenes Hoy', value: data.todayOrders, icon: Clock, color: 'hsl(199, 89%, 48%)' },
-    { label: 'Clientes Totales', value: data.totalCustomers, icon: Users, color: 'hsl(162, 84%, 39%)' },
-    { label: 'Completadas', value: `${data.completionRate}%`, icon: ClipboardCheck, color: 'hsl(280, 67%, 60%)' },
-    { label: 'Total Ingresos', value: `$${data.totalRevenue?.toLocaleString()}`, icon: TrendingUp, color: 'hsl(35, 92%, 50%)' },
+    { label: 'Órdenes Hoy', value: data.todayOrders, icon: Clock, color: 'hsl(199, 89%, 48%)', type: 'today' },
+    { label: 'Próximas Órdenes', value: data.upcomingOrdersCount, icon: Calendar, color: 'hsl(162, 84%, 39%)', type: 'upcoming' },
+    { label: 'Completadas', value: `${data.completionRate}%`, icon: ClipboardCheck, color: 'hsl(280, 67%, 60%)', type: 'completed' },
+    { label: 'Total Ingresos', value: `$${data.totalRevenue?.toLocaleString()}`, icon: TrendingUp, color: 'hsl(35, 92%, 50%)', type: 'revenue' },
   ];
+
+  const handleStatClick = (type) => {
+    setModalType(type);
+    setShowModal(true);
+  };
+
+  const getModalContent = () => {
+    switch (modalType) {
+      case 'today':
+        return {
+          title: 'Órdenes Recibidas Hoy',
+          list: data.todayOrdersList || [],
+          renderItem: (order) => (
+            <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{order.id}</span>
+                <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
+              </div>
+              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontStyle: 'italic' }}>{order.status_name}</span>
+            </div>
+          )
+        };
+      case 'upcoming':
+        return {
+          title: 'Entregas Próximas (3 días)',
+          list: data.upcomingOrdersList || [],
+          renderItem: (order) => (
+            <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{order.id}</span>
+                <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>
+                  {new Date(order.delivery_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                </p>
+                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{order.status_name}</span>
+              </div>
+            </div>
+          )
+        };
+      case 'completed':
+        return {
+          title: 'Órdenes Completadas (Últimas 20)',
+          list: data.completedOrdersList || [],
+          renderItem: (order) => (
+            <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{order.id}</span>
+                <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--accent-secondary)' }}>Entregado: {new Date(order.delivery_date).toLocaleDateString()}</p>
+                <p style={{ fontWeight: 'bold' }}>${order.total_cost}</p>
+              </div>
+            </div>
+          )
+        };
+      case 'revenue':
+        return {
+          title: 'Detalle de Ingresos (Órdenes Entregadas)',
+          list: data.completedOrdersList || [],
+          renderItem: (order) => (
+            <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>#{order.id} - {order.customer_name}</span>
+              <span style={{ fontWeight: 'bold', color: 'hsl(35, 92%, 50%)' }}>+${order.total_cost}</span>
+            </div>
+          )
+        };
+      default:
+        return { title: 'Información', list: [], renderItem: () => null };
+    }
+  };
+
+  const modalContent = getModalContent();
 
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
@@ -47,7 +131,16 @@ const DashboardView = ({ token }) => {
         marginBottom: '40px'
       }}>
         {stats.map((stat, i) => (
-          <div key={i} className="glass-card" style={{ padding: '24px' }}>
+          <div 
+            key={i} 
+            className="glass-card" 
+            onClick={() => handleStatClick(stat.type)}
+            style={{ 
+              padding: '24px', 
+              cursor: 'pointer',
+              transition: 'transform 0.2s ease'
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div style={{ 
                 background: `${stat.color}15`, 
@@ -56,12 +149,33 @@ const DashboardView = ({ token }) => {
               }}>
                 <stat.icon size={24} color={stat.color} />
               </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', background: 'var(--glass-bg)', padding: '2px 8px', borderRadius: '4px' }}>VER DETALLE</div>
             </div>
             <h3 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '4px' }}>{stat.value}</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{stat.label}</p>
           </div>
         ))}
       </div>
+
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div className="glass-card" style={{ padding: '32px', width: '100%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <h2 className="title-gradient" style={{ marginBottom: '24px' }}>{modalContent.title}</h2>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {modalContent.list.length > 0 ? modalContent.list.map(modalContent.renderItem) : (
+                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px' }}>No hay información disponible para este apartado.</p>
+              )}
+            </div>
+            <button 
+              onClick={() => setShowModal(false)}
+              className="btn-primary" 
+              style={{ width: '100%', marginTop: '24px' }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="glass-card" style={{ padding: '32px' }}>
         <h2 style={{ marginBottom: '24px', fontSize: '1.5rem' }}>Órdenes Recientes</h2>

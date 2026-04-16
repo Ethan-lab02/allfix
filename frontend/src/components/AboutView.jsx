@@ -25,7 +25,7 @@ const AboutView = () => {
           <div style={{ display: 'flex', gap: '12px' }}>
             <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'hsla(162, 84%, 39%, 0.1)', color: 'var(--accent-secondary)', fontSize: '0.8rem', fontWeight: '600' }}>Vite + React</span>
             <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'hsla(199, 89%, 48%, 0.1)', color: 'var(--accent-primary)', fontSize: '0.8rem', fontWeight: '600' }}>Node.js + Express</span>
-            <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'hsla(210, 40%, 98%, 0.1)', color: 'white', fontSize: '0.8rem', fontWeight: '600' }}>PostgreSQL</span>
+            <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: '600' }}>PostgreSQL</span>
           </div>
         </div>
 

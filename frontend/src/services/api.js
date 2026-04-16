@@ -72,6 +72,10 @@ export const api = {
     getDetails: (id, token) => fetch(`${API_URL}/orders/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(res => res.json()),
+    delete: (id, token) => fetch(`${API_URL}/orders/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(res => res.json()),
   },
   stats: {
     getSummary: (token) => fetch(`${API_URL}/stats`, {

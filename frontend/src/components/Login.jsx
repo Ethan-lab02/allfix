@@ -97,7 +97,7 @@ const Login = ({ onLogin }) => {
                     borderRadius: '12px', 
                     border: '1px solid var(--glass-border)', 
                     background: 'hsla(210, 40%, 98%, 0.05)',
-                    color: 'white',
+                    color: 'var(--text-primary)',
                     fontFamily: 'var(--font-main)'
                   }}
                 >

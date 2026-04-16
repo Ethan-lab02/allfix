@@ -194,7 +194,7 @@ const CustomersView = ({ token }) => {
                   borderRadius: '12px', 
                   border: '1px solid var(--glass-border)', 
                   background: 'hsla(210, 40%, 98%, 0.05)',
-                  color: 'white',
+                  color: 'var(--text-primary)',
                   fontFamily: 'var(--font-main)',
                   minHeight: '100px'
                 }}
@@ -203,7 +203,7 @@ const CustomersView = ({ token }) => {
                 <button className="btn-primary" onClick={handleSave} style={{ flex: 1 }}>{isEdit ? 'Actualizar' : 'Guardar'}</button>
                 <button 
                   onClick={() => setShowModal(false)}
-                  style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'white' }}
+                  style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)' }}
                 >Cancelar</button>
               </div>
             </div>

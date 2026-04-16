@@ -58,7 +58,8 @@ const OrdersView = ({ token }) => {
     accessories: '',
     estimated_cost: '',
     technician_id: '',
-    photo_urls: ''
+    photo_urls: '',
+    delivery_date: ''
   });
 
   useEffect(() => {
@@ -149,7 +150,8 @@ const OrdersView = ({ token }) => {
           accessories: '',
           estimated_cost: '',
           technician_id: '',
-          photo_urls: ''
+          photo_urls: '',
+          delivery_date: ''
         });
         fetchOrders();
       } else {
@@ -188,6 +190,21 @@ const OrdersView = ({ token }) => {
       }
     } catch (err) {
       alert('Error de conexión con el servidor');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta orden? Esta acción no se puede deshacer.')) return;
+    
+    try {
+      const response = await api.orders.delete(id, token);
+      if (response && !response.error) {
+        fetchOrders();
+      } else {
+        alert('Error al eliminar: ' + (response.error || 'Desconocido'));
+      }
+    } catch (err) {
+      alert('Error de conexión al eliminar la orden');
     }
   };
 
@@ -268,7 +285,7 @@ const OrdersView = ({ token }) => {
                 onChange={(e) => handleStatusChange(order.id, e.target.value)}
                 style={{ 
                   background: 'hsla(210, 40%, 98%, 0.05)', 
-                  color: 'white', 
+                  color: 'var(--text-primary)', 
                   border: '1px solid var(--glass-border)',
                   padding: '8px 12px',
                   borderRadius: '10px',
@@ -298,13 +315,24 @@ const OrdersView = ({ token }) => {
                   </button>
                   <button style={{ 
                     background: 'hsla(210, 40%, 98%, 0.1)', 
-                    color: 'white', 
+                    color: 'var(--text-primary)', 
                     padding: '8px 16px', 
                     borderRadius: '10px',
                     fontSize: '0.9rem' 
                   }} onClick={() => fetchOrderDetails(order.id)}>
                     Ver Detalles
                   </button>
+                  {order.status_id >= 3 && (
+                    <button style={{ 
+                      background: 'hsla(0, 84%, 60%, 0.1)', 
+                      color: '#ff4d4d', 
+                      padding: '8px 16px', 
+                      borderRadius: '10px',
+                      fontSize: '0.9rem' 
+                    }} onClick={() => handleDelete(order.id)}>
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -329,7 +357,7 @@ const OrdersView = ({ token }) => {
                     value={newOrder.customer_id}
                     onChange={(e) => setNewOrder({...newOrder, customer_id: e.target.value})}
                     className="glass-input"
-                    style={{ background: 'hsla(0,0%,100%,0.1)', color: 'white' }}
+                    style={{ background: 'hsla(0,0%,100%,0.1)', color: 'var(--text-primary)' }}
                   >
                     <option value="" style={{ background: '#1a1a1a' }}>Selecciona un cliente...</option>
                     {customers.map(c => (
@@ -342,7 +370,7 @@ const OrdersView = ({ token }) => {
                   <select 
                     value={newOrder.technician_id}
                     onChange={(e) => setNewOrder({...newOrder, technician_id: e.target.value})}
-                    style={{ background: 'hsla(0,0%,100%,0.1)', color: 'white', borderRadius: '12px', padding: '12px', border: '1px solid var(--glass-border)' }}
+                    style={{ background: 'hsla(0,0%,100%,0.1)', color: 'var(--text-primary)', borderRadius: '12px', padding: '12px', border: '1px solid var(--glass-border)' }}
                   >
                     <option value="" style={{ background: '#1a1a1a' }}>Opcional...</option>
                     {technicians.map(t => (
@@ -380,7 +408,7 @@ const OrdersView = ({ token }) => {
                   placeholder="Detalles de la falla..."
                   value={newOrder.problem_description}
                   onChange={e => setNewOrder({...newOrder, problem_description: e.target.value})}
-                  style={{ width: '100%', height: '60px', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'white' }}
+                  style={{ width: '100%', height: '60px', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'var(--text-primary)' }}
                 />
               </div>
 
@@ -398,11 +426,20 @@ const OrdersView = ({ token }) => {
                   <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Costo Estimado</label>
                   <input type="number" placeholder="$0.00" value={newOrder.estimated_cost} onChange={e => setNewOrder({...newOrder, estimated_cost: e.target.value})} />
                 </div>
+                <div>
+                  <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Fecha de Entrega (Promesa)</label>
+                  <input 
+                    type="date" 
+                    value={newOrder.delivery_date} 
+                    onChange={e => setNewOrder({...newOrder, delivery_date: e.target.value})} 
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'var(--text-primary)', border: '1px solid var(--glass-border)' }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <button className="btn-primary" style={{ flex: 1 }} onClick={handleSave}>Crear Orden</button>
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'white', borderRadius: '12px' }}>Cancelar</button>
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)', borderRadius: '12px' }}>Cancelar</button>
               </div>
             </div>
           </div>
@@ -516,7 +553,7 @@ const OrdersView = ({ token }) => {
                   value={editOrderData.status_id}
                   onChange={(e) => setEditOrderData({...editOrderData, status_id: e.target.value})}
                   className="glass-input"
-                  style={{ background: 'hsla(0,0%,100%,0.1)', color: 'white', width: '100%' }}
+                  style={{ background: 'hsla(0,0%,100%,0.1)', color: 'var(--text-primary)', width: '100%' }}
                 >
                   <option value="1" style={{ background: '#1a1a1a' }}>Recibido</option>
                   <option value="2" style={{ background: '#1a1a1a' }}>En Proceso</option>
@@ -531,7 +568,7 @@ const OrdersView = ({ token }) => {
                   placeholder="Escribe el diagnóstico detallado..."
                   value={editOrderData.diagnosis}
                   onChange={e => setEditOrderData({...editOrderData, diagnosis: e.target.value})}
-                  style={{ width: '100%', height: '80px', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'white', fontFamily: 'inherit' }}
+                  style={{ width: '100%', height: '80px', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
                 />
               </div>
 
@@ -541,7 +578,7 @@ const OrdersView = ({ token }) => {
                   placeholder="Notas adicionales..."
                   value={editOrderData.observations}
                   onChange={e => setEditOrderData({...editOrderData, observations: e.target.value})}
-                  style={{ width: '100%', height: '60px', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'white', fontFamily: 'inherit' }}
+                  style={{ width: '100%', height: '60px', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'var(--text-primary)', fontFamily: 'inherit' }}
                 />
               </div>
 
@@ -551,7 +588,7 @@ const OrdersView = ({ token }) => {
                   <select 
                     value={editOrderData.technician_id}
                     onChange={(e) => setEditOrderData({...editOrderData, technician_id: e.target.value})}
-                    style={{ background: 'hsla(0,0%,100%,0.1)', color: 'white', borderRadius: '12px', padding: '10px', border: '1px solid var(--glass-border)', width: '100%', fontSize: '0.9rem' }}
+                    style={{ background: 'hsla(0,0%,100%,0.1)', color: 'var(--text-primary)', borderRadius: '12px', padding: '10px', border: '1px solid var(--glass-border)', width: '100%', fontSize: '0.9rem' }}
                   >
                     <option value="" style={{ background: '#1a1a1a' }}>Sin asignar</option>
                     {technicians.map(t => (
@@ -571,7 +608,7 @@ const OrdersView = ({ token }) => {
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <button className="btn-primary" style={{ flex: 1 }} onClick={handleUpdate}>Guardar Cambios</button>
-                <button onClick={() => setShowEditModal(false)} style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'white', borderRadius: '12px' }}>Cancelar</button>
+                <button onClick={() => setShowEditModal(false)} style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)', borderRadius: '12px' }}>Cancelar</button>
               </div>
             </div>
           </div>

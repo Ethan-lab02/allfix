@@ -12,12 +12,24 @@
   --shadow-premium: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   --font-main: 'Outfit', sans-serif;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body.light-mode {
+  --bg-primary: hsl(210, 40%, 96%);
+  --bg-secondary: hsl(210, 40%, 90%);
+  --text-primary: hsl(222, 47%, 11%);
+  --text-secondary: hsl(215, 20%, 40%);
+  --glass-bg: hsla(210, 40%, 98%, 0.8);
+  --glass-border: hsla(222, 47%, 11%, 0.1);
+  --shadow-premium: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  transition: var(--theme-transition);
 }
 
 body {
@@ -71,21 +83,36 @@ input {
   padding: 14px;
   border-radius: 12px;
   border: 1px solid var(--glass-border);
-  background: hsla(210, 40%, 98%, 0.05);
-  color: white;
+  background: var(--glass-bg);
+  color: var(--text-primary);
   font-family: var(--font-main);
-  transition: var(--transition-smooth);
+  transition: var(--theme-transition);
 }
 
 input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  background: hsla(210, 40%, 98%, 0.1);
+  background: var(--bg-secondary);
 }
 
 .title-gradient {
-  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+body.light-mode select,
+body.light-mode textarea {
+  color: var(--text-primary) !important;
+  background: var(--glass-bg) !important;
+}
+
+body.light-mode .glass-card button {
+  color: var(--text-primary);
+}
+
+body.light-mode select option {
+  background: #f0f0f0 !important;
+  color: #1a1a1a !important;
 }
