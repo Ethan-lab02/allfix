@@ -2,6 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, Plus, Search, Clock, CheckCircle, Package, Truck, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 
+const formatDateTime = (value) => {
+  if (!value) return 'Sin definir';
+
+  return new Date(value).toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const ACCESSORY_OPTIONS = ['SIM', 'Funda', 'Memoria', 'Cargador'];
+
 const StatusBadge = ({ status }) => {
   const configs = {
     'recibido': { color: 'hsl(199, 89%, 48%)', icon: Clock, label: 'Recibido' },
@@ -37,6 +51,7 @@ const OrdersView = ({ token }) => {
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [technicians, setTechnicians] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -53,12 +68,10 @@ const OrdersView = ({ token }) => {
     equipment_type: '',
     brand: '',
     model: '',
-    serial_number: '',
     problem_description: '',
-    accessories: '',
+    accessories: [],
     estimated_cost: '',
     technician_id: '',
-    photo_urls: '',
     delivery_date: ''
   });
 
@@ -125,18 +138,36 @@ const OrdersView = ({ token }) => {
     }
   };
 
+  const toggleAccessory = (accessory) => {
+    const currentAccessories = Array.isArray(newOrder.accessories) ? newOrder.accessories : [];
+    const hasAccessory = currentAccessories.includes(accessory);
+
+    setNewOrder({
+      ...newOrder,
+      accessories: hasAccessory
+        ? currentAccessories.filter((item) => item !== accessory)
+        : [...currentAccessories, accessory]
+    });
+  };
+
   const handleSave = async () => {
     try {
-      // Split accessories/photos by comma or newline
-      const accessoriesArray = newOrder.accessories.split(/[, \n]+/).filter(a => a.trim());
-      const photoArray = newOrder.photo_urls ? newOrder.photo_urls.split(/[, \n]+/).filter(p => p.trim()) : [];
-      
-      const payload = { 
-        ...newOrder, 
-        accessories: accessoriesArray,
-        photo_urls: photoArray
-      };
-      
+      const accessoriesArray = Array.isArray(newOrder.accessories)
+        ? newOrder.accessories
+        : String(newOrder.accessories || '').split(/[, \n]+/).filter(a => a.trim());
+      const payload = new FormData();
+
+      Object.entries({
+        ...newOrder,
+        accessories: JSON.stringify(accessoriesArray)
+      }).forEach(([key, value]) => {
+        payload.append(key, value ?? '');
+      });
+
+      selectedFiles.forEach((file) => {
+        payload.append('photos', file);
+      });
+
       const response = await api.orders.create(payload, token);
       if (response && !response.error) {
         setShowModal(false);
@@ -145,15 +176,15 @@ const OrdersView = ({ token }) => {
           equipment_type: '',
           brand: '',
           model: '',
-          serial_number: '',
           problem_description: '',
-          accessories: '',
+          accessories: [],
           estimated_cost: '',
           technician_id: '',
-          photo_urls: '',
           delivery_date: ''
         });
+        setSelectedFiles([]);
         fetchOrders();
+        alert(`Orden creada correctamente. Folio generado: ${response.folio || `#${response.id}`}`);
       } else {
         alert('Error al guardar la orden: ' + (response.error || 'Desconocido'));
       }
@@ -222,7 +253,8 @@ const OrdersView = ({ token }) => {
 
   const filteredOrders = orders.filter(o => 
     o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.id?.toString().includes(searchTerm)
+    o.id?.toString().includes(searchTerm) ||
+    o.folio?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -232,7 +264,7 @@ const OrdersView = ({ token }) => {
           <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: '700' }}>Órdenes de Servicio</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Seguimiento y gestión de reparaciones en tiempo real.</p>
         </div>
-        <button className="btn-primary" onClick={() => { fetchCustomers(); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button className="btn-primary" onClick={() => { fetchCustomers(); setSelectedFiles([]); setShowModal(true); }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Plus size={20} />
           Nueva Orden
         </button>
@@ -269,7 +301,7 @@ const OrdersView = ({ token }) => {
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary)', letterSpacing: '1px' }}>#{order.id}</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--accent-primary)', letterSpacing: '1px' }}>{order.folio || `#${order.id}`}</span>
                   <StatusBadge status={order.status_name || 'recibido'} />
                 </div>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '2px' }}>{order.customer_name}</h3>
@@ -301,7 +333,7 @@ const OrdersView = ({ token }) => {
 
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                  Ingreso: {new Date(order.created_at).toLocaleDateString()}
+                  Ingreso: {formatDateTime(order.created_at)}
                 </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button style={{ 
@@ -370,7 +402,7 @@ const OrdersView = ({ token }) => {
                   <select 
                     value={newOrder.technician_id}
                     onChange={(e) => setNewOrder({...newOrder, technician_id: e.target.value})}
-                    style={{ background: 'hsla(0,0%,100%,0.1)', color: 'var(--text-primary)', borderRadius: '12px', padding: '12px', border: '1px solid var(--glass-border)' }}
+                    className="glass-input"
                   >
                     <option value="" style={{ background: '#1a1a1a' }}>Opcional...</option>
                     {technicians.map(t => (
@@ -396,10 +428,6 @@ const OrdersView = ({ token }) => {
                   <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Modelo</label>
                   <input type="text" placeholder="Ej. Inspiron 15" value={newOrder.model} onChange={e => setNewOrder({...newOrder, model: e.target.value})} />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Núm. Serie</label>
-                  <input type="text" placeholder="S/N" value={newOrder.serial_number} onChange={e => setNewOrder({...newOrder, serial_number: e.target.value})} />
-                </div>
               </div>
 
               <div>
@@ -408,19 +436,52 @@ const OrdersView = ({ token }) => {
                   placeholder="Detalles de la falla..."
                   value={newOrder.problem_description}
                   onChange={e => setNewOrder({...newOrder, problem_description: e.target.value})}
-                  style={{ width: '100%', height: '60px', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'var(--text-primary)' }}
+                  className="glass-input"
+                  style={{ minHeight: '84px', resize: 'vertical' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Evidencias (URLs separadas por coma)</label>
-                <input type="text" placeholder="http://imagen1.jpg, http://imagen2.jpg" value={newOrder.photo_urls} onChange={e => setNewOrder({...newOrder, photo_urls: e.target.value})} />
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Evidencias Fotográficas</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
+                  className="glass-input"
+                />
+                <p style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {selectedFiles.length > 0
+                    ? `${selectedFiles.length} archivo(s): ${selectedFiles.map(file => file.name).join(', ')}`
+                    : 'Selecciona hasta 5 imágenes desde tu computadora.'}
+                </p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Accesorios (separados por coma)</label>
-                  <input type="text" placeholder="Cargador, funda..." value={newOrder.accessories} onChange={e => setNewOrder({...newOrder, accessories: e.target.value})} />
+                  <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Accesorios</label>
+                  <div className="accessory-switch-grid">
+                    {ACCESSORY_OPTIONS.map((accessory) => {
+                      const isActive = newOrder.accessories.includes(accessory);
+
+                      return (
+                        <button
+                          key={accessory}
+                          type="button"
+                          className={`accessory-switch ${isActive ? 'is-active' : ''}`}
+                          onClick={() => toggleAccessory(accessory)}
+                        >
+                          <span>{accessory}</span>
+                          <span className="accessory-switch-track">
+                            <span className="accessory-switch-thumb" />
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    Activa todos los accesorios que llegaron con el equipo.
+                  </p>
                 </div>
                 <div>
                   <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Costo Estimado</label>
@@ -429,17 +490,25 @@ const OrdersView = ({ token }) => {
                 <div>
                   <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Fecha de Entrega (Promesa)</label>
                   <input 
-                    type="date" 
+                    type="datetime-local" 
                     value={newOrder.delivery_date} 
                     onChange={e => setNewOrder({...newOrder, delivery_date: e.target.value})} 
-                    style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'hsla(0,0%,100%,0.05)', color: 'var(--text-primary)', border: '1px solid var(--glass-border)' }}
+                    className="glass-input"
                   />
                 </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <button className="btn-primary" style={{ flex: 1 }} onClick={handleSave}>Crear Orden</button>
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)', borderRadius: '12px' }}>Cancelar</button>
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedFiles([]);
+                  }}
+                  style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)', borderRadius: '12px' }}
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
           </div>
@@ -455,10 +524,10 @@ const OrdersView = ({ token }) => {
                 <p style={{ margin: '4px 0', fontSize: '0.9rem', color: '#666' }}>Digital Management System - Reporte de Servicio</p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <h2 style={{ margin: 0 }}>Folio #{selectedOrder.id}</h2>
-                <p style={{ margin: '4px 0' }}>Ingreso: {new Date(selectedOrder.created_at).toLocaleDateString()}</p>
+                <h2 style={{ margin: 0 }}>Folio {selectedOrder.folio || `#${selectedOrder.id}`}</h2>
+                <p style={{ margin: '4px 0' }}>Ingreso: {formatDateTime(selectedOrder.created_at)}</p>
                 {selectedOrder.delivery_date && (
-                  <p style={{ margin: '4px 0', color: '#16a34a', fontWeight: 'bold' }}>Entregado: {new Date(selectedOrder.delivery_date).toLocaleDateString()}</p>
+                  <p style={{ margin: '4px 0', color: '#16a34a', fontWeight: 'bold' }}>Entrega programada/real: {formatDateTime(selectedOrder.delivery_date)}</p>
                 )}
               </div>
             </div>
@@ -474,7 +543,6 @@ const OrdersView = ({ token }) => {
                 <h4 style={{ textTransform: 'uppercase', fontSize: '0.8rem', color: '#888', marginBottom: '12px', borderBottom: '1px solid #ddd' }}>Datos del Equipo</h4>
                 <p style={{ margin: '8px 0' }}><strong>Equipo:</strong> {selectedOrder.equipment_type} {selectedOrder.brand}</p>
                 <p style={{ margin: '8px 0' }}><strong>Modelo:</strong> {selectedOrder.model}</p>
-                <p style={{ margin: '8px 0' }}><strong>S/N:</strong> {selectedOrder.serial_number}</p>
               </div>
             </div>
 

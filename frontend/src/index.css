@@ -95,6 +95,104 @@ input:focus {
   background: var(--bg-secondary);
 }
 
+select,
+textarea,
+.glass-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  transition: var(--theme-transition);
+}
+
+select:focus,
+textarea:focus,
+.glass-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+input[type="file"] {
+  padding: 10px 12px;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  font-family: var(--font-main);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.accessory-switch-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.accessory-switch {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  background: hsla(210, 40%, 98%, 0.04);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 hsla(210, 40%, 98%, 0.04);
+}
+
+.accessory-switch:hover {
+  border-color: hsla(199, 89%, 48%, 0.35);
+  transform: translateY(-1px);
+}
+
+.accessory-switch.is-active {
+  background: linear-gradient(135deg, hsla(199, 89%, 48%, 0.16), hsla(162, 84%, 39%, 0.14));
+  border-color: hsla(199, 89%, 48%, 0.4);
+  box-shadow: 0 0 0 1px hsla(199, 89%, 48%, 0.12), 0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.accessory-switch-track {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: hsla(215, 20%, 65%, 0.28);
+  border: 1px solid hsla(210, 40%, 98%, 0.08);
+  transition: var(--transition-smooth);
+}
+
+.accessory-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  transition: var(--transition-smooth);
+}
+
+.accessory-switch.is-active .accessory-switch-track {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.accessory-switch.is-active .accessory-switch-thumb {
+  transform: translateX(19px);
+}
+
 .title-gradient {
   background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
@@ -115,4 +213,8 @@ body.light-mode .glass-card button {
 body.light-mode select option {
   background: #f0f0f0 !important;
   color: #1a1a1a !important;
+}
+
+body.light-mode .accessory-switch {
+  background: hsla(210, 40%, 98%, 0.7);
 }

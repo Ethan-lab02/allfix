@@ -1,5 +1,10 @@
 const API_URL = '/api';
 
+const parseJson = async (res) => {
+  const data = await res.json();
+  return data;
+};
+
 export const api = {
   auth: {
     login: (credentials) => fetch(`${API_URL}/auth/login`, {
@@ -41,15 +46,21 @@ export const api = {
   orders: {
     getAll: (token) => fetch(`${API_URL}/orders`, {
       headers: { 'Authorization': `Bearer ${token}` }
-    }).then(res => res.json()),
-    create: (data, token) => fetch(`${API_URL}/orders`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(data)
-    }).then(res => res.json()),
+    }).then(parseJson),
+    create: (data, token) => {
+      const isFormData = data instanceof FormData;
+
+      return fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: isFormData
+          ? { 'Authorization': `Bearer ${token}` }
+          : {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+        body: isFormData ? data : JSON.stringify(data)
+      }).then(parseJson);
+    },
     updateStatus: (id, status_id, token) => fetch(`${API_URL}/orders/${id}/status`, {
       method: 'PUT',
       headers: { 
@@ -57,7 +68,7 @@ export const api = {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ status_id })
-    }).then(res => res.json()),
+    }).then(parseJson),
     update: (id, data, token) => fetch(`${API_URL}/orders/${id}`, {
       method: 'PUT',
       headers: { 
@@ -65,17 +76,17 @@ export const api = {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(data)
-    }).then(res => res.json()),
+    }).then(parseJson),
     getTechnicians: (token) => fetch(`${API_URL}/orders/technicians`, {
       headers: { 'Authorization': `Bearer ${token}` }
-    }).then(res => res.json()),
+    }).then(parseJson),
     getDetails: (id, token) => fetch(`${API_URL}/orders/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
-    }).then(res => res.json()),
+    }).then(parseJson),
     delete: (id, token) => fetch(`${API_URL}/orders/${id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
-    }).then(res => res.json()),
+    }).then(parseJson),
   },
   stats: {
     getSummary: (token) => fetch(`${API_URL}/stats`, {

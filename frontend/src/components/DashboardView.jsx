@@ -3,6 +3,18 @@ import { TrendingUp, Users, ClipboardCheck, Clock, Calendar } from 'lucide-react
 
 import { api } from '../services/api';
 
+const formatDateTime = (value) => {
+  if (!value) return 'Sin definir';
+
+  return new Date(value).toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 const DashboardView = ({ token }) => {
   const [data, setData] = React.useState({
     todayOrders: 0,
@@ -53,7 +65,7 @@ const DashboardView = ({ token }) => {
           renderItem: (order) => (
             <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
               <div>
-                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{order.id}</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</span>
                 <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
               </div>
@@ -68,13 +80,13 @@ const DashboardView = ({ token }) => {
           renderItem: (order) => (
             <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
               <div>
-                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{order.id}</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</span>
                 <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>
-                  {new Date(order.delivery_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                  {formatDateTime(order.delivery_date)}
                 </p>
                 <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{order.status_name}</span>
               </div>
@@ -88,12 +100,12 @@ const DashboardView = ({ token }) => {
           renderItem: (order) => (
             <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
               <div>
-                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{order.id}</span>
+                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</span>
                 <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '0.85rem', color: 'var(--accent-secondary)' }}>Entregado: {new Date(order.delivery_date).toLocaleDateString()}</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--accent-secondary)' }}>Entregado: {formatDateTime(order.delivery_date)}</p>
                 <p style={{ fontWeight: 'bold' }}>${order.total_cost}</p>
               </div>
             </div>
@@ -105,7 +117,7 @@ const DashboardView = ({ token }) => {
           list: data.completedOrdersList || [],
           renderItem: (order) => (
             <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>#{order.id} - {order.customer_name}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{order.folio || `#${order.id}`} - {order.customer_name}</span>
               <span style={{ fontWeight: 'bold', color: 'hsl(35, 92%, 50%)' }}>+${order.total_cost}</span>
             </div>
           )
@@ -193,7 +205,7 @@ const DashboardView = ({ token }) => {
             <tbody>
               {data.recentOrders?.length > 0 ? data.recentOrders.map((order) => (
                 <tr key={order.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                  <td style={{ padding: '16px 0', fontWeight: 'bold', color: 'var(--accent-primary)' }}>#{order.id}</td>
+                  <td style={{ padding: '16px 0', fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</td>
                   <td style={{ padding: '16px 0' }}>{order.customer_name}</td>
                   <td style={{ padding: '16px 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</td>
                   <td style={{ padding: '16px 0' }}>
@@ -208,7 +220,7 @@ const DashboardView = ({ token }) => {
                     }}>{order.status_name}</span>
                   </td>
                   <td style={{ padding: '16px 0', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    {new Date(order.created_at).toLocaleDateString()}
+                    {formatDateTime(order.created_at)}
                   </td>
                 </tr>
               )) : (
