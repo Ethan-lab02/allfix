@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Plus, Search, Clock, CheckCircle, Package, Truck, AlertCircle } from 'lucide-react';
+import { ClipboardList, Plus, Search, Clock, CheckCircle, Package, AlertCircle, Wrench, FileSearch, XCircle } from 'lucide-react';
 import { api } from '../services/api';
 
 const formatDateTime = (value) => {
@@ -15,11 +15,15 @@ const formatDateTime = (value) => {
 };
 
 const ACCESSORY_OPTIONS = ['SIM', 'Funda', 'Memoria', 'Cargador'];
+const DELETABLE_STATUSES = ['terminado', 'entregado', 'cancelado'];
 
 const StatusBadge = ({ status }) => {
   const configs = {
     'recibido': { color: 'hsl(199, 89%, 48%)', icon: Clock, label: 'Recibido' },
-    'en proceso': { color: 'hsl(35, 92%, 50%)', icon: AlertCircle, label: 'En Proceso' },
+    'en diagnostico': { color: 'hsl(41, 92%, 56%)', icon: FileSearch, label: 'En Diagnostico' },
+    'en reparacion': { color: 'hsl(24, 95%, 53%)', icon: Wrench, label: 'En Reparacion' },
+    'retrasado': { color: 'hsl(0, 84%, 60%)', icon: AlertCircle, label: 'Retrasado' },
+    'cancelado': { color: 'hsl(0, 0%, 55%)', icon: XCircle, label: 'Cancelado' },
     'terminado': { color: 'hsl(280, 67%, 60%)', icon: CheckCircle, label: 'Terminado' },
     'entregado': { color: 'hsl(162, 84%, 39%)', icon: Package, label: 'Entregado' },
   };
@@ -53,6 +57,7 @@ const OrdersView = ({ token }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [technicians, setTechnicians] = useState([]);
+  const [statuses, setStatuses] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -80,8 +85,18 @@ const OrdersView = ({ token }) => {
       fetchOrders();
       fetchCustomers();
       fetchTechnicians();
+      fetchStatuses();
     }
   }, [token]);
+
+  const fetchStatuses = async () => {
+    try {
+      const data = await api.orders.getStatuses(token);
+      if (Array.isArray(data)) setStatuses(data);
+    } catch (err) {
+      console.error('Error fetching statuses:', err);
+    }
+  };
 
   const fetchTechnicians = async () => {
     try {
@@ -325,10 +340,11 @@ const OrdersView = ({ token }) => {
                   cursor: 'pointer'
                 }}
               >
-                <option value="1" style={{ background: '#1a1a1a' }}>Recibido</option>
-                <option value="2" style={{ background: '#1a1a1a' }}>En Proceso</option>
-                <option value="3" style={{ background: '#1a1a1a' }}>Terminado</option>
-                <option value="4" style={{ background: '#1a1a1a' }}>Entregado</option>
+                {statuses.map((statusOption) => (
+                  <option key={statusOption.id} value={statusOption.id} style={{ background: '#1a1a1a' }}>
+                    {statusOption.name}
+                  </option>
+                ))}
               </select>
 
               <div style={{ textAlign: 'right' }}>
@@ -354,7 +370,7 @@ const OrdersView = ({ token }) => {
                   }} onClick={() => fetchOrderDetails(order.id)}>
                     Ver Detalles
                   </button>
-                  {order.status_id >= 3 && (
+                  {DELETABLE_STATUSES.includes((order.status_name || '').toLowerCase()) && (
                     <button style={{ 
                       background: 'hsla(0, 84%, 60%, 0.1)', 
                       color: '#ff4d4d', 
@@ -623,10 +639,11 @@ const OrdersView = ({ token }) => {
                   className="glass-input"
                   style={{ background: 'hsla(0,0%,100%,0.1)', color: 'var(--text-primary)', width: '100%' }}
                 >
-                  <option value="1" style={{ background: '#1a1a1a' }}>Recibido</option>
-                  <option value="2" style={{ background: '#1a1a1a' }}>En Proceso</option>
-                  <option value="3" style={{ background: '#1a1a1a' }}>Terminado</option>
-                  <option value="4" style={{ background: '#1a1a1a' }}>Entregado</option>
+                  {statuses.map((statusOption) => (
+                    <option key={statusOption.id} value={statusOption.id} style={{ background: '#1a1a1a' }}>
+                      {statusOption.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 

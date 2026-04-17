@@ -47,6 +47,9 @@ export const api = {
     getAll: (token) => fetch(`${API_URL}/orders`, {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(parseJson),
+    getStatuses: (token) => fetch(`${API_URL}/orders/statuses`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(parseJson),
     create: (data, token) => {
       const isFormData = data instanceof FormData;
 

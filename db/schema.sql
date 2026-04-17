@@ -42,7 +42,13 @@ CREATE TABLE IF NOT EXISTS order_status (
 );
 
 INSERT INTO order_status (name) VALUES 
-('recibido'), ('en proceso'), ('terminado'), ('entregado') 
+('recibido'),
+('en diagnostico'),
+('en reparacion'),
+('retrasado'),
+('cancelado'),
+('terminado'),
+('entregado') 
 ON CONFLICT DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS service_orders (
