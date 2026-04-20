@@ -29,6 +29,8 @@ const DashboardView = ({ token }) => {
   });
   const [modalType, setModalType] = React.useState(null); // 'today', 'upcoming', 'completed', 'revenue'
   const [showModal, setShowModal] = React.useState(false);
+  const [selectedOrder, setSelectedOrder] = React.useState(null);
+  const [showReceipt, setShowReceipt] = React.useState(false);
 
   React.useEffect(() => {
     const fetchStats = async () => {
@@ -56,6 +58,22 @@ const DashboardView = ({ token }) => {
     setShowModal(true);
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleOrderOpen = async (orderId) => {
+    try {
+      const orderData = await api.orders.getDetails(orderId, token);
+      if (orderData && !orderData.error) {
+        setSelectedOrder(orderData);
+        setShowReceipt(true);
+      }
+    } catch (err) {
+      console.error('Error fetching order receipt:', err);
+    }
+  };
+
   const getModalContent = () => {
     switch (modalType) {
       case 'today':
@@ -63,14 +81,18 @@ const DashboardView = ({ token }) => {
           title: 'Órdenes Recibidas Hoy',
           list: data.todayOrdersList || [],
           renderItem: (order) => (
-            <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
+            <button
+              key={order.id}
+              onClick={() => handleOrderOpen(order.id)}
+              style={{ width: '100%', padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'transparent', color: 'inherit', borderRadius: '0', textAlign: 'left' }}
+            >
               <div>
                 <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</span>
                 <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
               </div>
               <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', fontStyle: 'italic' }}>{order.status_name}</span>
-            </div>
+            </button>
           )
         };
       case 'upcoming':
@@ -78,7 +100,11 @@ const DashboardView = ({ token }) => {
           title: 'Entregas Próximas (3 días)',
           list: data.upcomingOrdersList || [],
           renderItem: (order) => (
-            <div key={order.id} style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between' }}>
+            <button
+              key={order.id}
+              onClick={() => handleOrderOpen(order.id)}
+              style={{ width: '100%', padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'transparent', color: 'inherit', borderRadius: '0', textAlign: 'left' }}
+            >
               <div>
                 <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</span>
                 <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
@@ -90,7 +116,7 @@ const DashboardView = ({ token }) => {
                 </p>
                 <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{order.status_name}</span>
               </div>
-            </div>
+            </button>
           )
         };
       case 'completed':
@@ -189,6 +215,90 @@ const DashboardView = ({ token }) => {
         </div>
       )}
 
+      {showReceipt && selectedOrder && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
+          <div id="dashboard-order-receipt" className="glass-card" style={{ position: 'relative', padding: '40px', width: '100%', maxWidth: '800px', maxHeight: '95vh', overflowY: 'auto', background: '#ffffff', color: '#000000' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #eee', paddingBottom: '20px', marginBottom: '30px' }}>
+              <div style={{ textAlign: 'center', flex: 1 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <img src="/login-logo.png" alt="ALLFIX logo" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: '50%', display: 'block', margin: '0 auto' }} />
+                </div>
+                <h1 style={{ margin: 0, color: 'hsl(199, 89%, 48%)' }}>ALLFIX BACALAR</h1>
+                <p style={{ margin: '4px 0', fontSize: '0.9rem', color: '#666' }}>Sistema de Gestión Digital - Reporte de Servicio</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <h2 style={{ margin: 0 }}>Folio {selectedOrder.folio || `#${selectedOrder.id}`}</h2>
+                <p style={{ margin: '4px 0' }}>Ingreso: {formatDateTime(selectedOrder.created_at)}</p>
+                {selectedOrder.delivery_date && (
+                  <p style={{ margin: '4px 0', color: '#16a34a', fontWeight: 'bold' }}>Entrega programada/real: {formatDateTime(selectedOrder.delivery_date)}</p>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginBottom: '30px' }}>
+              <div>
+                <h4 style={{ textTransform: 'uppercase', fontSize: '0.8rem', color: '#888', marginBottom: '12px', borderBottom: '1px solid #ddd' }}>Datos del Cliente</h4>
+                <p style={{ margin: '8px 0' }}><strong>Nombre:</strong> {selectedOrder.customer_name}</p>
+                <p style={{ margin: '8px 0' }}><strong>Teléfono:</strong> {selectedOrder.customer_phone}</p>
+                <p style={{ margin: '8px 0' }}><strong>Dirección:</strong> {selectedOrder.customer_address}</p>
+              </div>
+              <div>
+                <h4 style={{ textTransform: 'uppercase', fontSize: '0.8rem', color: '#888', marginBottom: '12px', borderBottom: '1px solid #ddd' }}>Datos del Equipo</h4>
+                <p style={{ margin: '8px 0' }}><strong>Equipo:</strong> {selectedOrder.equipment_type} {selectedOrder.brand}</p>
+                <p style={{ margin: '8px 0' }}><strong>Modelo:</strong> {selectedOrder.model}</p>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '30px', padding: '24px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+              <h4 style={{ marginTop: 0, color: '#1e293b' }}>Diagnóstico y Observaciones</h4>
+              <p style={{ lineHeight: '1.6', color: '#334155' }}>{selectedOrder.diagnosis || 'Sin diagnóstico registrado.'}</p>
+              {selectedOrder.observations && (
+                <div style={{ marginTop: '16px' }}>
+                  <strong>Observaciones adicionales:</strong>
+                  <p>{selectedOrder.observations}</p>
+                </div>
+              )}
+              {selectedOrder.accessories?.length > 0 && (
+                <div style={{ marginTop: '16px' }}>
+                  <strong>Accesorios recibidos:</strong>
+                  <p style={{ color: '#64748b' }}>{selectedOrder.accessories.join(', ')}</p>
+                </div>
+              )}
+            </div>
+
+            {selectedOrder.photos?.length > 0 && (
+              <div style={{ marginBottom: '30px' }}>
+                <h4 style={{ borderBottom: '1px solid #ddd', paddingBottom: '8px' }}>Evidencias Fotográficas</h4>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px' }}>
+                  {selectedOrder.photos.map((p, i) => (
+                    <img key={i} src={p.url} alt="Evidencia" style={{ width: '140px', height: '140px', objectFit: 'cover', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="no-print" style={{ marginTop: '40px', display: 'flex', gap: '16px' }}>
+              <button
+                className="btn-primary"
+                style={{ flex: 1, padding: '16px' }}
+                onClick={handlePrint}
+              >
+                Imprimir Comprobante
+              </button>
+              <button
+                onClick={() => setShowReceipt(false)}
+                style={{ flex: 1, background: '#f1f5f9', color: '#475569', borderRadius: '12px', fontWeight: 'bold' }}
+              >
+                Cerrar Vista
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      
+
       <div className="glass-card" style={{ padding: '32px' }}>
         <h2 style={{ marginBottom: '24px', fontSize: '1.5rem' }}>Órdenes Recientes</h2>
         <div style={{ overflowX: 'auto' }}>
@@ -198,8 +308,10 @@ const DashboardView = ({ token }) => {
                 <th style={{ paddingBottom: '16px' }}>Folio</th>
                 <th style={{ paddingBottom: '16px' }}>Cliente</th>
                 <th style={{ paddingBottom: '16px' }}>Equipo</th>
+                <th style={{ paddingBottom: '16px' }}>Problema</th>
                 <th style={{ paddingBottom: '16px' }}>Estado</th>
-                <th style={{ paddingBottom: '16px', textAlign: 'right' }}>Fecha</th>
+                <th style={{ paddingBottom: '16px' }}>Entrada</th>
+                <th style={{ paddingBottom: '16px', textAlign: 'right' }}>Entrega</th>
               </tr>
             </thead>
             <tbody>
@@ -207,7 +319,12 @@ const DashboardView = ({ token }) => {
                 <tr key={order.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
                   <td style={{ padding: '16px 0', fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</td>
                   <td style={{ padding: '16px 0' }}>{order.customer_name}</td>
-                  <td style={{ padding: '16px 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</td>
+                  <td style={{ padding: '16px 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    {order.equipment_type} {order.brand ? `- ${order.brand}` : ''} {order.model ? `(${order.model})` : ''}
+                  </td>
+                  <td style={{ padding: '16px 0', fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '240px' }}>
+                    {order.diagnosis || 'Sin problema registrado'}
+                  </td>
                   <td style={{ padding: '16px 0' }}>
                     <span style={{ 
                       padding: '4px 10px', 
@@ -219,13 +336,16 @@ const DashboardView = ({ token }) => {
                       textTransform: 'uppercase'
                     }}>{order.status_name}</span>
                   </td>
-                  <td style={{ padding: '16px 0', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <td style={{ padding: '16px 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                     {formatDateTime(order.created_at)}
+                  </td>
+                  <td style={{ padding: '16px 0', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {formatDateTime(order.delivery_date)}
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="5" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <td colSpan="7" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                     No hay órdenes recientes para mostrar.
                   </td>
                 </tr>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, User, Phone, Mail, MapPin, MoreVertical } from 'lucide-react';
+import { Plus, Search, User, Phone, Mail, MapPin } from 'lucide-react';
 import { api } from '../services/api';
 
 const CustomersView = ({ token }) => {
@@ -113,6 +113,7 @@ const CustomersView = ({ token }) => {
             <tr style={{ borderBottom: '1px solid var(--glass-border)', background: 'hsla(210, 40%, 98%, 0.02)' }}>
               <th style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontWeight: '500' }}>Cliente</th>
               <th style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontWeight: '500' }}>Contacto</th>
+              <th style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontWeight: '500' }}>Órdenes</th>
               <th style={{ padding: '16px 24px', color: 'var(--text-secondary)', fontWeight: '500' }}>Dirección</th>
               <th style={{ padding: '16px 24px', textAlign: 'right' }}>Acciones</th>
             </tr>
@@ -139,6 +140,11 @@ const CustomersView = ({ token }) => {
                   </div>
                 </td>
                 <td style={{ padding: '16px 24px' }}>
+                  <span style={{ display: 'inline-flex', minWidth: '44px', justifyContent: 'center', padding: '6px 10px', borderRadius: '999px', background: 'hsla(199, 89%, 48%, 0.12)', color: 'var(--accent-primary)', fontWeight: '700', fontSize: '0.85rem' }}>
+                    {customer.orders_count || 0}
+                  </span>
+                </td>
+                <td style={{ padding: '16px 24px' }}>
                   <span style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <MapPin size={14} color="var(--text-secondary)" /> {customer.address}
                   </span>
@@ -152,7 +158,7 @@ const CustomersView = ({ token }) => {
               </tr>
             )) : (
               <tr>
-                <td colSpan="4" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                   No se encontraron clientes.
                 </td>
               </tr>

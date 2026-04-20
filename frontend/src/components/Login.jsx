@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, ShieldCheck, AlertCircle } from 'lucide-react';
+import { LogIn, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 
 const Login = ({ onLogin }) => {
@@ -44,8 +44,12 @@ const Login = ({ onLogin }) => {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '20px' }}>
       <div className="glass-card" style={{ padding: '40px', maxWidth: '450px', width: '100%' }}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <div style={{ display: 'inline-flex', padding: '12px', background: 'hsla(199, 89%, 48%, 0.15)', borderRadius: '16px', marginBottom: '16px' }}>
-            <ShieldCheck size={32} color="hsl(199, 89%, 48%)" />
+          <div style={{ display: 'inline-flex', padding: '6px', borderRadius: '16px', marginBottom: '16px' }}>
+            <img
+              src="/login-logo.png"
+              alt="ALLFIX logo"
+              style={{ width: 140, height: 140, objectFit: 'cover', borderRadius: '50%', background: 'transparent' }}
+            />
           </div>
           <h1 className="title-gradient" style={{ fontSize: '2rem', fontWeight: '700' }}>ALLFIX</h1>
           <p style={{ color: 'var(--text-secondary)' }}>

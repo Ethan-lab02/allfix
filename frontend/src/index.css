@@ -43,6 +43,34 @@ body {
     radial-gradient(at 100% 100%, hsla(162, 84%, 39%, 0.1) 0px, transparent 50%);
 }
 
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: hsla(210, 40%, 98%, 0.06);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsla(199, 89%, 48%, 0.85), hsla(162, 84%, 39%, 0.85));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, hsla(199, 89%, 48%, 1), hsla(162, 84%, 39%, 1));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsla(199, 89%, 48%, 0.9) hsla(210, 40%, 98%, 0.08);
+}
+
 .glass-card {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -217,4 +245,64 @@ body.light-mode select option {
 
 body.light-mode .accessory-switch {
   background: hsla(210, 40%, 98%, 0.7);
+}
+
+.search-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.search-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.search-filter-select,
+.search-input-shell {
+  min-width: 0;
+}
+
+.search-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: hsla(210, 40%, 98%, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.search-clear-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: hsla(210, 40%, 98%, 0.08);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.search-clear-button:hover {
+  background: hsla(199, 89%, 48%, 0.14);
+  color: var(--text-primary);
+}
+
+@media (max-width: 720px) {
+  .search-toolbar {
+    grid-template-columns: 1fr;
+  }
 }

@@ -3,9 +3,7 @@ import {
   LayoutDashboard, 
   Users, 
   ClipboardList, 
-  Settings, 
   LogOut,
-  Smartphone,
   Info
 } from 'lucide-react';
 
@@ -15,7 +13,6 @@ const Sidebar = ({ activeTab, onTabChange, onLogout }) => {
     { id: 'customers', icon: Users, label: 'Clientes' },
     { id: 'orders', icon: ClipboardList, label: 'Órdenes' },
     { id: 'about', icon: Info, label: 'Acerca de' },
-    { id: 'settings', icon: Settings, label: 'Ajustes' },
   ];
 
   return (
@@ -28,14 +25,14 @@ const Sidebar = ({ activeTab, onTabChange, onLogout }) => {
       flexDirection: 'column',
       position: 'fixed'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px', padding: '0 8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px', padding: '50 8px' }}>
         <div style={{ 
-          background: 'var(--accent-primary)', 
-          padding: '8px', 
-          borderRadius: '12px',
+          padding: '50',
+          borderRadius: '50%',
+          overflow: 'hidden',
           boxShadow: '0 0 15px hsla(199, 89%, 48%, 0.5)'
         }}>
-          <Smartphone size={24} color="white" />
+          <img src="/login-logo.png" alt="ALLFIX logo" style={{ width: 56, height: 56, objectFit: 'cover', display: 'block' }} />
         </div>
         <h2 className="title-gradient" style={{ fontSize: '1.5rem', fontWeight: '700' }}>ALLFIX</h2>
       </div>

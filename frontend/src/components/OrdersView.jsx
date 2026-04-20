@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Plus, Search, Clock, CheckCircle, Package, AlertCircle, Wrench, FileSearch, XCircle } from 'lucide-react';
+import { ClipboardList, Plus, Search, Clock, CheckCircle, Package, AlertCircle, Wrench, FileSearch, XCircle, X } from 'lucide-react';
 import { api } from '../services/api';
 
+// Small helpers and defaults used across the component
 const formatDateTime = (value) => {
   if (!value) return 'Sin definir';
 
@@ -14,8 +15,15 @@ const formatDateTime = (value) => {
   });
 };
 
-const ACCESSORY_OPTIONS = ['SIM', 'Funda', 'Memoria', 'Cargador'];
-const DELETABLE_STATUSES = ['terminado', 'entregado', 'cancelado'];
+const toDateTimeLocalValue = (value) => {
+  if (!value) return '';
+  const d = new Date(value);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const ACCESSORY_OPTIONS = ['Cargador', 'Batería', 'Funda', 'Audífonos', 'Cable', 'Adaptador'];
+const DELETABLE_STATUSES = ['recibido', 'cancelado'];
 
 const StatusBadge = ({ status }) => {
   const configs = {
@@ -50,7 +58,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const OrdersView = ({ token }) => {
+const OrdersView = ({ token, focusOrderId, onFocusHandled }) => {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,7 +74,8 @@ const OrdersView = ({ token }) => {
     observations: '',
     total_cost: '',
     technician_id: '',
-    status_id: ''
+    status_id: '',
+    delivery_date: ''
   });
   const [newOrder, setNewOrder] = useState({
     customer_id: '',
@@ -88,6 +97,14 @@ const OrdersView = ({ token }) => {
       fetchStatuses();
     }
   }, [token]);
+
+  useEffect(() => {
+    if (!token || !focusOrderId) return;
+
+    fetchOrderDetails(focusOrderId);
+    setSearchTerm(String(focusOrderId));
+    onFocusHandled?.();
+  }, [focusOrderId, token]);
 
   const fetchStatuses = async () => {
     try {
@@ -261,16 +278,30 @@ const OrdersView = ({ token }) => {
       observations: order.observations || '',
       total_cost: order.total_cost || 0,
       technician_id: order.technician_id || '',
-      status_id: order.status_id || ''
+      status_id: order.status_id || '',
+      delivery_date: toDateTimeLocalValue(order.delivery_date)
     });
     setShowEditModal(true);
   };
 
-  const filteredOrders = orders.filter(o => 
-    o.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.id?.toString().includes(searchTerm) ||
-    o.folio?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+
+  const getSearchableValues = (order) => ({
+    cliente: order.customer_name || '',
+    folio: order.folio || order.id?.toString() || '',
+    equipo: order.equipment_type || '',
+    modelo: order.model || ''
+  });
+
+  const filteredOrders = orders.filter((order) => {
+    if (!normalizedSearchTerm) return true;
+
+    const searchableValues = getSearchableValues(order);
+
+    return Object.values(searchableValues).some((value) =>
+      String(value).toLowerCase().includes(normalizedSearchTerm)
+    );
+  });
 
   return (
     <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
@@ -285,16 +316,36 @@ const OrdersView = ({ token }) => {
         </button>
       </header>
 
-      <div className="glass-card" style={{ padding: '24px', marginBottom: '24px' }}>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
-          <Search size={20} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
-          <input 
-            type="text" 
-            placeholder="Buscar por cliente o folio..." 
-            style={{ paddingLeft: '44px' }}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="glass-card search-panel" style={{ padding: '24px', marginBottom: '24px' }}>
+        <div className="search-toolbar">
+          <div className="search-input-shell">
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+              Buscar orden
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Search size={20} color="var(--text-secondary)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="text"
+                placeholder="Busca por cliente, folio, tipo de equipo o modelo..."
+                style={{ paddingLeft: '46px', paddingRight: '46px' }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  className="search-clear-button"
+                  onClick={() => setSearchTerm('')}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="search-meta">
+          <span className="search-chip">{filteredOrders.length} resultado(s)</span>
         </div>
       </div>
 
@@ -394,7 +445,17 @@ const OrdersView = ({ token }) => {
 
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
-          <div className="glass-card" style={{ padding: '32px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="glass-card" style={{ position: 'relative', padding: '32px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button
+              onClick={() => {
+                setShowModal(false);
+                setSelectedFiles([]);
+              }}
+              style={{ position: 'absolute', top: '16px', right: '16px', width: '42px', height: '42px', padding: '0', borderRadius: '999px', background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--glass-border)' }}
+              title="Cerrar ventana"
+            >
+              <X size={20} />
+            </button>
             <h2 className="title-gradient" style={{ marginBottom: '24px' }}>Nueva Orden de Servicio</h2>
             
             <div style={{ display: 'grid', gap: '20px' }}>
@@ -533,11 +594,15 @@ const OrdersView = ({ token }) => {
 
       {showDetails && selectedOrder && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 110 }}>
-          <div id="order-receipt" className="glass-card" style={{ padding: '40px', width: '100%', maxWidth: '800px', maxHeight: '95vh', overflowY: 'auto', background: '#ffffff', color: '#000000' }}>
+          <div id="order-receipt" className="glass-card" style={{ position: 'relative', padding: '40px', width: '100%', maxWidth: '800px', maxHeight: '95vh', overflowY: 'auto', background: '#ffffff', color: '#000000' }}>
+            
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #eee', paddingBottom: '20px', marginBottom: '30px' }}>
-              <div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ marginBottom: 12 }}>
+                  <img src="/login-logo.png" alt="ALLFIX logo" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: '50%', display: 'block', margin: '0 auto' }} />
+                </div>
                 <h1 style={{ margin: 0, color: 'hsl(199, 89%, 48%)' }}>ALLFIX BACALAR</h1>
-                <p style={{ margin: '4px 0', fontSize: '0.9rem', color: '#666' }}>Digital Management System - Reporte de Servicio</p>
+                <p style={{ margin: '4px 0', fontSize: '0.9rem', color: '#666' }}>Sistema de Gestión Digital - Reporte de Servicio</p>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <h2 style={{ margin: 0 }}>Folio {selectedOrder.folio || `#${selectedOrder.id}`}</h2>
@@ -691,6 +756,16 @@ const OrdersView = ({ token }) => {
                 </div>
               </div>
 
+              <div>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Fecha de Entrega</label>
+                <input
+                  type="datetime-local"
+                  value={editOrderData.delivery_date}
+                  onChange={e => setEditOrderData({...editOrderData, delivery_date: e.target.value})}
+                  className="glass-input"
+                />
+              </div>
+
               <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
                 <button className="btn-primary" style={{ flex: 1 }} onClick={handleUpdate}>Guardar Cambios</button>
                 <button onClick={() => setShowEditModal(false)} style={{ flex: 1, background: 'hsla(210, 40%, 98%, 0.1)', color: 'var(--text-primary)', borderRadius: '12px' }}>Cancelar</button>
@@ -699,6 +774,38 @@ const OrdersView = ({ token }) => {
           </div>
         </div>
       )}
+
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          ::-webkit-scrollbar { display: none !important; }
+          html, body { overflow: visible !important; height: auto !important; }
+          body { -webkit-print-color-adjust: exact; }
+
+          /* Make receipt background transparent and avoid clipping */
+          .receipt-overlay { background: transparent !important; backdrop-filter: none !important; }
+
+          #order-receipt, #dashboard-order-receipt, .glass-card {
+            overflow: visible !important;
+            max-height: none !important;
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+            padding: 12px !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 800px !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+
+          /* Hide photos and reduce logo for single-page fit */
+          .receipt-photos { display: none !important; }
+          .receipt-logo img { width: 64px !important; height: 64px !important; }
+
+          /* Narrow margins for printing */
+          @page { size: auto; margin: 12mm; }
+        }
+      `}</style>
     </div>
   );
 };

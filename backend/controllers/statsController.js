@@ -31,7 +31,16 @@ exports.getStats = async (req, res) => {
 
     // Fetch 5 most recent orders
     const recentOrders = await db.query(`
-      SELECT o.id, c.name as customer_name, e.type as equipment_type, s.name as status_name, o.created_at
+      SELECT
+        o.id,
+        c.name as customer_name,
+        e.type as equipment_type,
+        e.brand,
+        e.model,
+        s.name as status_name,
+        o.created_at,
+        o.delivery_date,
+        o.diagnosis
       FROM service_orders o
       JOIN equipment e ON o.equipment_id = e.id
       JOIN customers c ON e.customer_id = c.id
@@ -63,16 +72,18 @@ exports.getStats = async (req, res) => {
       LIMIT 20
     `);
 
-    // Fetch upcoming orders (today, tomorrow, day after)
+    // Fetch upcoming scheduled orders from now onward
     const upcomingOrders = await db.query(`
       SELECT o.id, c.name as customer_name, e.type as equipment_type, s.name as status_name, o.delivery_date, o.created_at
       FROM service_orders o
       JOIN equipment e ON o.equipment_id = e.id
       JOIN customers c ON e.customer_id = c.id
       JOIN order_status s ON o.status_id = s.id
-      WHERE o.delivery_date::date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '2 days')
-      AND s.name != 'entregado'
+      WHERE o.delivery_date IS NOT NULL
+      AND o.delivery_date >= NOW()
+      AND s.name NOT IN ('entregado', 'cancelado')
       ORDER BY o.delivery_date ASC
+      LIMIT 20
     `);
 
     const totalOrders = parseInt(ordersCount.rows[0].count);

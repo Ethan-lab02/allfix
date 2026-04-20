@@ -3,7 +3,16 @@ const db = require('../db');
 exports.getCustomers = async (req, res) => {
   try {
     console.log('Fetching customers for user:', req.user.id);
-    const result = await db.query('SELECT * FROM customers ORDER BY name');
+    const result = await db.query(`
+      SELECT
+        c.*,
+        COUNT(DISTINCT so.id) AS orders_count
+      FROM customers c
+      LEFT JOIN equipment e ON e.customer_id = c.id
+      LEFT JOIN service_orders so ON so.equipment_id = e.id
+      GROUP BY c.id
+      ORDER BY c.name
+    `);
     console.log('Customers found in DB:', result.rows.length);
     res.json(result.rows);
   } catch (err) {
