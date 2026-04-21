@@ -3,12 +3,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
-  const { name, email, password, role_id } = req.body;
+  const { name, email, password } = req.body;
   try {
+    // Obtener el role_id por defecto (Recepcionista) desde la tabla roles
+    const roleRes = await db.query('SELECT id FROM roles WHERE name = $1 LIMIT 1', ['receptionist']);
+    const defaultRoleId = roleRes.rows[0] ? roleRes.rows[0].id : null;
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await db.query(
       'INSERT INTO users (name, email, password, role_id) VALUES ($1, $2, $3, $4) RETURNING id, name, email',
-      [name, email, hashedPassword, role_id]
+      [name, email, hashedPassword, defaultRoleId]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

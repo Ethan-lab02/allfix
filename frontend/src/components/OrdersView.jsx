@@ -22,6 +22,17 @@ const toDateTimeLocalValue = (value) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
+// Devuelve la diferencia en días entre la fecha dada y el inicio del día actual
+const daysFromToday = (value) => {
+  if (!value) return null;
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(value);
+  // Normalizamos tiempo y calculamos diferencia en milisegundos
+  const diffMs = target.setHours(0,0,0,0) - todayStart.getTime();
+  return Math.floor(diffMs / (24 * 60 * 60 * 1000));
+};
+
 const ACCESSORY_OPTIONS = ['Cargador', 'Batería', 'Funda', 'Audífonos', 'Cable', 'Adaptador'];
 const DELETABLE_STATUSES = ['recibido', 'cancelado'];
 
@@ -348,6 +359,8 @@ const OrdersView = ({ token, focusOrderId, onFocusHandled }) => {
           <span className="search-chip">{filteredOrders.length} resultado(s)</span>
         </div>
       </div>
+
+      {/* Próximas órdenes movidas a Dashboard */}
 
       <div style={{ display: 'grid', gap: '16px' }}>
         {filteredOrders.length > 0 ? filteredOrders.map((order) => (

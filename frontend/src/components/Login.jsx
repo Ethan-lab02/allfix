@@ -7,7 +7,7 @@ const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState('3'); 
+  
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,8 +24,8 @@ const Login = ({ onLogin }) => {
         } else {
           onLogin({ ...response.user, token: response.token });
         }
-      } else {
-        const response = await api.auth.register({ name, email, password, role_id: role });
+        } else {
+        const response = await api.auth.register({ name, email, password });
         if (response.error) {
           setError('Error al registrar: ' + response.error);
         } else {
@@ -89,27 +89,7 @@ const Login = ({ onLogin }) => {
                   disabled={loading}
                 />
               </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Rol del Usuario</label>
-                <select 
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  disabled={loading}
-                  style={{ 
-                    width: '100%', 
-                    padding: '14px', 
-                    borderRadius: '12px', 
-                    border: '1px solid var(--glass-border)', 
-                    background: 'hsla(210, 40%, 98%, 0.05)',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-main)'
-                  }}
-                >
-                  <option value="1" style={{ background: '#1a1a1a' }}>Administrador</option>
-                  <option value="2" style={{ background: '#1a1a1a' }}>Técnico</option>
-                  <option value="3" style={{ background: '#1a1a1a' }}>Recepcionista</option>
-                </select>
-              </div>
+              {/* Se elimina la selección de rol en el registro; el backend asigna el rol por defecto */}
             </>
           )}
 

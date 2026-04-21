@@ -15,6 +15,16 @@ const formatDateTime = (value) => {
   });
 };
 
+// Devuelve la diferencia en días entre la fecha dada y el inicio del día actual
+const daysFromToday = (value) => {
+  if (!value) return null;
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(value);
+  const diffMs = (new Date(target.getFullYear(), target.getMonth(), target.getDate()).getTime()) - todayStart.getTime();
+  return Math.floor(diffMs / (24 * 60 * 60 * 1000));
+};
+
 const DashboardView = ({ token }) => {
   const [data, setData] = React.useState({
     todayOrders: 0,
@@ -27,6 +37,7 @@ const DashboardView = ({ token }) => {
     todayOrdersList: [],
     completedOrdersList: []
   });
+  const [upcomingList, setUpcomingList] = React.useState([]);
   const [modalType, setModalType] = React.useState(null); // 'today', 'upcoming', 'completed', 'revenue'
   const [showModal, setShowModal] = React.useState(false);
   const [selectedOrder, setSelectedOrder] = React.useState(null);
@@ -46,9 +57,33 @@ const DashboardView = ({ token }) => {
     fetchStats();
   }, [token]);
 
+  // Obtener todas las órdenes y filtrar las entregas para los próximos 1-3 días
+  React.useEffect(() => {
+    if (!token) return;
+
+    const fetchAndFilterUpcoming = async () => {
+      try {
+        const allOrders = await api.orders.getAll(token);
+        if (Array.isArray(allOrders)) {
+          const upcoming = allOrders
+            .filter(o => o.delivery_date)
+            .map(o => ({ ...o, daysAway: daysFromToday(o.delivery_date) }))
+            .filter(o => o.daysAway >= 1 && o.daysAway <= 3)
+            .sort((a, b) => new Date(a.delivery_date) - new Date(b.delivery_date));
+
+          setUpcomingList(upcoming);
+        }
+      } catch (err) {
+        console.error('Error fetching orders for upcoming list:', err);
+      }
+    };
+
+    fetchAndFilterUpcoming();
+  }, [token]);
+
   const stats = [
     { label: 'Órdenes Hoy', value: data.todayOrders, icon: Clock, color: 'hsl(199, 89%, 48%)', type: 'today' },
-    { label: 'Próximas Órdenes', value: data.upcomingOrdersCount, icon: Calendar, color: 'hsl(162, 84%, 39%)', type: 'upcoming' },
+    { label: 'Próximas Órdenes', value: upcomingList.length, icon: Calendar, color: 'hsl(162, 84%, 39%)', type: 'upcoming' },
     { label: 'Completadas', value: `${data.completionRate}%`, icon: ClipboardCheck, color: 'hsl(280, 67%, 60%)', type: 'completed' },
     { label: 'Total Ingresos', value: `$${data.totalRevenue?.toLocaleString()}`, icon: TrendingUp, color: 'hsl(35, 92%, 50%)', type: 'revenue' },
   ];
@@ -98,26 +133,33 @@ const DashboardView = ({ token }) => {
       case 'upcoming':
         return {
           title: 'Entregas Próximas (3 días)',
-          list: data.upcomingOrdersList || [],
-          renderItem: (order) => (
-            <button
-              key={order.id}
-              onClick={() => handleOrderOpen(order.id)}
-              style={{ width: '100%', padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'transparent', color: 'inherit', borderRadius: '0', textAlign: 'left' }}
-            >
-              <div>
-                <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</span>
-                <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>
-                  {formatDateTime(order.delivery_date)}
-                </p>
-                <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{order.status_name}</span>
-              </div>
-            </button>
-          )
+          list: upcomingList || [],
+          renderItem: (order) => {
+            const days = daysFromToday(order.delivery_date);
+            const label = days === 1 ? 'Mañana' : days === 2 ? 'Pasado mañana' : null;
+
+            return (
+              <button
+                key={order.id}
+                onClick={() => handleOrderOpen(order.id)}
+                style={{ width: '100%', padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', background: 'transparent', color: 'inherit', borderRadius: '0', textAlign: 'left' }}
+              >
+                <div>
+                  <span style={{ fontWeight: 'bold', color: 'var(--accent-primary)' }}>{order.folio || `#${order.id}`}</span>
+                  <p style={{ margin: '4px 0' }}>{order.customer_name}</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{order.equipment_type}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  {label ? (
+                    <p style={{ fontSize: '0.95rem', fontWeight: '700', color: label === 'Mañana' ? '#0ea5a4' : '#06b6d4' }}>{label}</p>
+                  ) : (
+                    <p style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--accent-secondary)' }}>{formatDateTime(order.delivery_date)}</p>
+                  )}
+                  <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{order.status_name}</span>
+                </div>
+              </button>
+            );
+          }
         };
       case 'completed':
         return {
@@ -354,6 +396,8 @@ const DashboardView = ({ token }) => {
           </table>
         </div>
       </div>
+
+      
 
       <style>{`
         @keyframes fadeIn {
